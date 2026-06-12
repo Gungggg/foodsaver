@@ -1,66 +1,51 @@
-import { useEffect, useState, useRef } from 'react';
+const colorVariants = {
+  primary: { bg: 'bg-primary-fixed/20', icon: 'text-primary', glow: 'bg-primary-fixed/20' },
+  secondary: { bg: 'bg-surface-container-low', icon: 'text-secondary', glow: 'bg-secondary-fixed/20' },
+  tertiary: { bg: 'bg-surface-container-low', icon: 'text-tertiary', glow: 'bg-tertiary-fixed/20' },
+  accent: { bg: 'bg-surface-container-low', icon: 'text-on-tertiary-container', glow: 'bg-tertiary-fixed/20' },
+};
 
-const StatCard = ({ icon: Icon, label, value, prefix = '', suffix = '', color = 'primary', trend, animate = true }) => {
-  const [displayValue, setDisplayValue] = useState(0);
-  const ref = useRef(null);
-  const numericValue = typeof value === 'number' ? value : parseFloat(value) || 0;
-
-  useEffect(() => {
-    if (!animate) {
-      setDisplayValue(numericValue);
-      return;
-    }
-    let start = 0;
-    const duration = 1500;
-    const startTime = performance.now();
-
-    const tick = (now) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplayValue(Math.floor(eased * numericValue));
-      if (progress < 1) requestAnimationFrame(tick);
-      else setDisplayValue(numericValue);
-    };
-    requestAnimationFrame(tick);
-  }, [numericValue, animate]);
-
-  const colors = {
-    primary: 'from-primary/10 to-primary/5 text-primary',
-    secondary: 'from-secondary/10 to-secondary/5 text-secondary',
-    accent: 'from-accent/10 to-accent/5 text-accent',
-    info: 'from-blue-500/10 to-blue-500/5 text-blue-600',
-    success: 'from-green-500/10 to-green-500/5 text-green-600',
-    error: 'from-red-500/10 to-red-500/5 text-red-600',
-  };
-
-  const iconBg = {
-    primary: 'bg-primary/10 text-primary',
-    secondary: 'bg-secondary/10 text-secondary-dark',
-    accent: 'bg-accent/10 text-accent-dark',
-    info: 'bg-blue-100 text-blue-600',
-    success: 'bg-green-100 text-green-600',
-    error: 'bg-red-100 text-red-600',
-  };
-
-  return (
-    <div ref={ref} className="stat-card relative overflow-hidden">
-      <div className={`absolute inset-0 bg-gradient-to-br ${colors[color]} opacity-30`} />
-      <div className="relative">
-        <div className="flex items-start justify-between mb-4">
-          <div className={`p-3 rounded-xl ${iconBg[color]}`}>
-            {Icon && <Icon className="w-6 h-6" />}
+const StatCard = ({ title, value, icon, trend, trendLabel, variant = 'primary', highlighted = false, className = '' }) => {
+  if (highlighted) {
+    return (
+      <div className={`bg-primary text-on-primary p-md rounded-xl shadow-[0_4px_24px_rgba(27,67,50,0.15)] flex flex-col justify-between relative overflow-hidden ${className}`}>
+        <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-2xl" />
+        <div className="flex justify-between items-start mb-lg relative z-10">
+          <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-on-primary">
+            <span className="material-symbols-outlined">{icon}</span>
           </div>
-          {trend !== undefined && (
-            <span className={`text-sm font-medium ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
+          {trend && (
+            <span className="bg-white/20 text-on-primary text-label-md font-label-md px-2 py-1 rounded-full flex items-center gap-xs backdrop-blur-sm">
+              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>trending_up</span> {trend}
             </span>
           )}
         </div>
-        <p className="text-sm text-neutral-500 mb-1">{label}</p>
-        <p className="counter-value text-2xl text-neutral-900">
-          {prefix}{displayValue.toLocaleString()}{suffix}
-        </p>
+        <div className="relative z-10">
+          <p className="text-label-md font-label-md text-on-primary/80 mb-xs">{title}</p>
+          <p className="text-display-lg font-display-lg text-on-primary">{value}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const colors = colorVariants[variant] || colorVariants.primary;
+
+  return (
+    <div className={`bg-surface-container-lowest p-md rounded-xl shadow-card flex flex-col justify-between border border-outline-variant/10 relative overflow-hidden ${className}`}>
+      <div className={`absolute -right-4 -top-4 w-24 h-24 ${colors.glow} rounded-full blur-2xl`} />
+      <div className="flex justify-between items-start mb-lg relative z-10">
+        <div className={`w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center ${colors.icon}`}>
+          <span className="material-symbols-outlined">{icon}</span>
+        </div>
+        {trend && (
+          <span className="bg-secondary-container text-on-secondary-container text-label-md font-label-md px-2 py-1 rounded-full flex items-center gap-xs">
+            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>trending_up</span> {trend}
+          </span>
+        )}
+      </div>
+      <div className="relative z-10">
+        <p className="text-label-md font-label-md text-on-surface-variant mb-xs">{title}</p>
+        <p className="text-display-lg font-display-lg text-on-background">{value}</p>
       </div>
     </div>
   );

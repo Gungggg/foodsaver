@@ -1,17 +1,13 @@
 import { useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Button, Input } from '../../components/common';
-import { HiMail, HiLockClosed } from 'react-icons/hi';
 
 const Login = () => {
   const { login, isAuthenticated, user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // If already authenticated, redirect immediately via render
   if (isAuthenticated && user && !authLoading) {
     const paths = { customer: '/customer/dashboard', merchant: '/merchant/dashboard', admin: '/admin/dashboard' };
     return <Navigate to={paths[user.role] || '/'} replace />;
@@ -22,11 +18,8 @@ const Login = () => {
     setLoading(true);
     try {
       await login(email, password);
-      // If we get here, login succeeded. Component will re-render
-      // with isAuthenticated=true and Navigate will redirect.
     } catch (err) {
-      console.error('Login error:', err);
-      setError(err?.message || err?.toString() || 'Login failed. Please try again.');
+      setError(err?.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -34,10 +27,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.email || !form.password) {
-      setError('Please fill in all fields');
-      return;
-    }
+    if (!form.email || !form.password) { setError('Please fill in all fields'); return; }
     await doLogin(form.email, form.password);
   };
 
@@ -47,84 +37,101 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-dark via-primary to-primary-light flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="floating-shape w-72 h-72 -top-20 -right-20 animate-float" />
-      <div className="floating-shape w-96 h-96 -bottom-32 -left-20 animate-float-slow" />
+    <div className="min-h-screen bg-primary flex items-center justify-center p-gutter relative overflow-hidden">
+      {/* Background pattern */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px'}} />
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary-container rounded-full mix-blend-screen filter blur-3xl opacity-20 translate-x-1/3 -translate-y-1/4" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/20 rounded-full filter blur-3xl opacity-30 -translate-x-1/3 translate-y-1/4" />
 
       <div className="w-full max-w-md relative z-10">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2">
-            <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
-              <span className="text-2xl">🌿</span>
+        <div className="text-center mb-lg">
+          <Link to="/" className="inline-flex items-center gap-sm">
+            <div className="w-10 h-10 bg-on-primary/10 backdrop-blur rounded-lg flex items-center justify-center text-on-primary">
+              <span className="material-symbols-outlined">eco</span>
             </div>
-            <span className="font-heading font-bold text-2xl text-white">FoodSaver</span>
+            <span className="text-headline-md font-headline-md text-on-primary">FoodSaver</span>
           </Link>
         </div>
 
         {/* Card */}
-        <div className="glass rounded-2xl p-8 shadow-card-lg">
-          <div className="text-center mb-6">
-            <h1 className="font-heading font-bold text-2xl text-neutral-900 mb-1">Welcome Back</h1>
-            <p className="text-neutral-500 text-sm">Sign in to your account</p>
+        <div className="bg-surface-container-lowest/95 backdrop-blur-md rounded-2xl p-lg shadow-card-hover border border-outline-variant/20">
+          <div className="text-center mb-md">
+            <h1 className="text-headline-lg font-headline-lg text-on-background mb-xs">Welcome Back</h1>
+            <p className="text-body-md font-body-md text-on-surface-variant">Sign in to your account</p>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+            <div className="mb-md p-sm bg-error-container rounded-lg text-body-sm font-body-sm text-on-error-container flex items-center gap-sm">
+              <span className="material-symbols-outlined text-[18px]">error</span>
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Email"
-              type="email"
-              icon={HiMail}
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              required
-            />
-            <Input
-              label="Password"
-              type="password"
-              icon={HiLockClosed}
-              placeholder="••••••••"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              required
-            />
+          <form onSubmit={handleSubmit} className="space-y-md">
+            <div>
+              <label className="block text-label-md font-label-md text-on-surface-variant mb-xs uppercase tracking-wider">Email</label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline text-[20px]">mail</span>
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className="w-full bg-surface border border-outline-variant rounded-lg pl-xl pr-sm py-sm text-body-md font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors placeholder:text-outline"
+                  required
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-label-md font-label-md text-on-surface-variant mb-xs uppercase tracking-wider">Password</label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline text-[20px]">lock</span>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  className="w-full bg-surface border border-outline-variant rounded-lg pl-xl pr-sm py-sm text-body-md font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors placeholder:text-outline"
+                  required
+                />
+              </div>
+            </div>
 
-            <Button type="submit" fullWidth size="lg" loading={loading}>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary text-on-primary py-sm rounded-lg text-body-md font-body-md font-semibold shadow-btn hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-sm"
+            >
+              {loading && <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>}
               Sign In
-            </Button>
+            </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-neutral-500">
+          <div className="mt-md text-center">
+            <p className="text-body-sm font-body-sm text-on-surface-variant">
               Don't have an account?{' '}
-              <Link to="/register" className="text-primary font-semibold hover:text-primary-light transition-colors">
-                Sign Up
-              </Link>
+              <Link to="/register" className="text-primary font-semibold hover:text-surface-tint transition-colors">Sign Up</Link>
             </p>
           </div>
 
-          {/* Demo accounts - click to login directly */}
-          <div className="mt-6 pt-6 border-t border-neutral-200">
-            <p className="text-xs text-neutral-400 text-center mb-3">Quick Login (Demo)</p>
-            <div className="grid grid-cols-3 gap-2">
+          {/* Quick Login */}
+          <div className="mt-md pt-md border-t border-outline-variant/20">
+            <p className="text-label-md font-label-md text-outline text-center mb-sm">Quick Login (Demo)</p>
+            <div className="grid grid-cols-3 gap-sm">
               {[
-                { label: '👤 Customer', email: 'sarah@example.com' },
-                { label: '🏪 Merchant', email: 'budi@greenplate.id' },
-                { label: '⚙️ Admin', email: 'admin@foodsaver.id' },
+                { label: 'Customer', email: 'sarah@example.com', icon: 'person' },
+                { label: 'Merchant', email: 'budi@greenplate.id', icon: 'storefront' },
+                { label: 'Admin', email: 'admin@foodsaver.id', icon: 'admin_panel_settings' },
               ].map((demo) => (
                 <button
                   key={demo.email}
                   type="button"
                   disabled={loading}
                   onClick={() => handleQuickLogin(demo.email)}
-                  className="text-xs px-3 py-2.5 rounded-lg bg-neutral-100 text-neutral-600 hover:bg-primary/10 hover:text-primary transition-colors font-medium disabled:opacity-50"
+                  className="flex flex-col items-center gap-xs px-sm py-sm rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-secondary-container hover:text-on-secondary-container transition-colors text-label-md font-label-md disabled:opacity-50"
                 >
+                  <span className="material-symbols-outlined text-[20px]">{demo.icon}</span>
                   {demo.label}
                 </button>
               ))}

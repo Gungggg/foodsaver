@@ -8,7 +8,7 @@ FoodSaver adalah platform marketplace B2C yang menghubungkan restoran, bakery, c
 ![Vite](https://img.shields.io/badge/Vite-5.3-646CFF?logo=vite&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?logo=tailwindcss&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-Sequelize-4479A1?logo=mysql&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-Raw_Query-4479A1?logo=mysql&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
@@ -79,18 +79,18 @@ FoodSaver adalah platform marketplace B2C yang menghubungkan restoran, bakery, c
 | **React Icons** | 5.2 | Icon library |
 | **html5-qrcode** | 2.3 | QR code scanner untuk pickup verification |
 
-### Backend
+### Backend (`foodsaver-backend`)
 | Teknologi | Versi | Fungsi |
 |-----------|-------|--------|
-| **Node.js + Express** | 4.21 | REST API server |
-| **Sequelize** | 6.37 | ORM (Object-Relational Mapping) |
-| **MySQL2** | 3.11 | Database driver |
+| **Node.js + Express** | 5.2 | REST API server |
+| **MySQL2** | 3.22 | Raw SQL queries (tanpa ORM) |
 | **JWT (jsonwebtoken)** | 9.0 | Autentikasi token-based |
-| **bcryptjs** | 2.4 | Password hashing |
-| **Multer** | 1.4 | File upload handling |
-| **Helmet** | 7.1 | HTTP security headers |
+| **bcryptjs** | 3.0 | Password hashing |
+| **Multer** | 2.1 | File upload handling |
+| **Helmet** | 8.1 | HTTP security headers |
+| **Morgan** | 1.10 | HTTP request logger |
 | **QRCode** | 1.5 | QR code generator untuk receipt |
-| **express-rate-limit** | 7.4 | Rate limiting API |
+| **UUID** | 14.0 | Unique ID generator |
 
 ---
 
@@ -108,21 +108,20 @@ FoodSaver adalah platform marketplace B2C yang menghubungkan restoran, bakery, c
                        │  JWT Bearer Token
                        ▼
 ┌─────────────────────────────────────────────────────┐
-│                    BACKEND                           │
-│              Node.js + Express.js                    │
+│              BACKEND (foodsaver-backend)              │
+│              Node.js + Express 5 (Port 5000)         │
 │                                                      │
-│   7 Controllers  ·  7 Services  ·  7 Route Modules   │
-│   Auth Middleware  ·  RBAC  ·  Validation            │
+│   7 Modules  ·  Modular Architecture                 │
+│   Auth Middleware  ·  RBAC  ·  Multer Upload         │
 └──────────────────────┬───────────────────────────────┘
-                       │  Sequelize ORM
+                       │  Raw MySQL Queries
                        ▼
 ┌─────────────────────────────────────────────────────┐
 │                    DATABASE                          │
-│                     MySQL                            │
+│                  MySQL (foodsaver)                    │
 │                                                      │
-│   9 Tables: Users, Merchants, Products, Orders,      │
-│   Payments, Receipts, Documents, Complaints,         │
-│   ImpactLogs                                         │
+│   Tables: users, merchant_profiles, surprise_bags,   │
+│   orders, invoices, payments, impact_logs             │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -170,42 +169,29 @@ foodsaver-api/
 │   ├── vite.config.js
 │   └── package.json
 │
-├── backend/                     # Express REST API
-│   ├── src/
-│   │   ├── config/
-│   │   │   ├── database.js      # MySQL connection config
-│   │   │   └── jwt.js           # JWT config
-│   │   ├── models/              # 9 Sequelize models
-│   │   │   ├── User.js
-│   │   │   ├── Merchant.js
-│   │   │   ├── Product.js
-│   │   │   ├── Order.js
-│   │   │   ├── Payment.js
-│   │   │   ├── Receipt.js
-│   │   │   ├── Document.js
-│   │   │   ├── Complaint.js
-│   │   │   ├── ImpactLog.js
-│   │   │   └── index.js         # Model associations
-│   │   ├── controllers/         # 7 request handlers
-│   │   ├── services/            # 7 business logic modules
-│   │   ├── routes/              # 7 route modules + index
-│   │   ├── middleware/
-│   │   │   ├── auth.js          # JWT verification
-│   │   │   ├── rbac.js          # Role-based access control
-│   │   │   ├── upload.js        # Multer file upload
-│   │   │   └── validation.js    # Request validation
-│   │   ├── utils/
-│   │   │   ├── response.js      # Standardized API response
-│   │   │   ├── qrcode.js        # QR code generator
-│   │   │   └── impactCalc.js    # CO₂ impact calculator
-│   │   └── app.js               # Express app setup
-│   ├── migrations/              # Database migrations
-│   ├── seeders/                 # Sample data seeders
-│   ├── uploads/                 # Uploaded files directory
-│   ├── server.js                # Server entry point
-│   ├── .env.example
-│   └── package.json
-│
+foodsaver-backend/               # Express REST API (separate repo)
+├── src/
+│   ├── server.js                # Entry point (port 5000)
+│   ├── app.js                   # Express app + route registration
+│   ├── config/
+│   │   └── db.js                # MySQL connection (raw mysql2)
+│   ├── modules/                 # Modular architecture
+│   │   ├── auth/                # Login, register, profile
+│   │   ├── products/            # CRUD surprise_bags
+│   │   ├── orders/              # Create, list, redeem orders
+│   │   ├── payments/            # Create, callback, get payment
+│   │   ├── merchant/            # Create & get merchant profile
+│   │   ├── admin/               # Merchants list, verify, dashboard
+│   │   └── impact/              # User impact stats
+│   ├── middleware/
+│   │   ├── authenticate.js      # JWT verification
+│   │   └── authorizeRole.js     # Role-based access control
+│   └── utils/
+│       └── upload.js            # Multer file upload config
+├── uploads/                     # Uploaded files
+├── .env                         # Environment variables
+└── package.json
+
 └── README.md
 ```
 
@@ -252,35 +238,34 @@ Frontend berjalan di **http://localhost:5173**
 
 > **📌 Mode Mock Data:** Frontend sudah bisa langsung digunakan tanpa backend karena menggunakan mock data. Semua fitur demo bisa diakses.
 
-### 3. Setup Backend (Opsional)
+### 3. Setup Backend
 
-Jika ingin menggunakan backend API yang sesungguhnya:
+Backend terletak di repository/folder terpisah: `foodsaver-backend`
 
 ```bash
 # Masuk ke direktori backend
-cd backend
+cd foodsaver-backend
 
 # Install dependencies
 npm install
 
-# Salin file environment
-cp .env.example .env
-# Edit .env sesuai konfigurasi database lokal Anda
+# Pastikan file .env sudah ada dengan konfigurasi:
+# PORT=5000
+# DB_HOST=localhost
+# DB_PORT=3306
+# DB_USER=root
+# DB_PASSWORD=
+# DB_NAME=foodsaver
+# JWT_SECRET=foodsaversecret
 
 # Buat database MySQL
-mysql -u root -e "CREATE DATABASE foodsaver_db;"
-
-# Jalankan migrasi database
-npm run migrate
-
-# Jalankan seeder (data contoh)
-npm run seed
+mysql -u root -e "CREATE DATABASE foodsaver;"
 
 # Jalankan server
 npm run dev
 ```
 
-Backend berjalan di **http://localhost:3000**
+Backend berjalan di **http://localhost:5000**
 
 ### 4. Hubungkan Frontend ke Backend
 
@@ -294,40 +279,24 @@ const USE_MOCK = true;
 const USE_MOCK = false;
 ```
 
+> **📌 Catatan:** `api.js` sudah dikonfigurasi ke `http://localhost:5000/api`
+
 ---
 
 ## ⚙️ Konfigurasi Environment
 
-Buat file `backend/.env` berdasarkan `.env.example`:
+File `foodsaver-backend/.env`:
 
 ```env
-# Server
-PORT=3000
-NODE_ENV=development
+PORT=5000
 
-# Database
-DB_HOST=127.0.0.1
+DB_HOST=localhost
 DB_PORT=3306
-DB_NAME=foodsaver_db
 DB_USER=root
-DB_PASS=
+DB_PASSWORD=
+DB_NAME=foodsaver
 
-# JWT
-JWT_SECRET=your_super_secret_jwt_key_change_this
-JWT_EXPIRES_IN=7d
-
-# Midtrans (Payment Gateway)
-MIDTRANS_SERVER_KEY=SB-Mid-server-xxxxxxxxxxxx
-MIDTRANS_CLIENT_KEY=SB-Mid-client-xxxxxxxxxxxx
-MIDTRANS_IS_PRODUCTION=false
-
-# File Uploads
-UPLOAD_DIR=uploads
-MAX_FILE_SIZE=5242880
-
-# App URLs
-APP_URL=http://localhost:3000
-FRONTEND_URL=http://localhost:5173
+JWT_SECRET=foodsaversecret
 ```
 
 ---
@@ -348,63 +317,56 @@ Gunakan **Quick Login** di halaman login untuk akses cepat:
 
 ## 📡 API Endpoints
 
+Base URL: `http://localhost:5000/api`
+
 ### Authentication
 | Method | Endpoint | Deskripsi | Auth |
 |--------|----------|-----------|------|
-| `POST` | `/api/v1/auth/register` | Register user baru | ❌ |
-| `POST` | `/api/v1/auth/login` | Login user | ❌ |
-| `GET` | `/api/v1/auth/me` | Get current user | ✅ |
-| `PUT` | `/api/v1/auth/profile` | Update profil | ✅ |
-| `PUT` | `/api/v1/auth/password` | Ganti password | ✅ |
+| `POST` | `/api/auth/register` | Register user baru | ❌ |
+| `POST` | `/api/auth/login` | Login → return `{ token }` | ❌ |
+| `GET` | `/api/auth/profile` | Get current user (dari JWT) | ✅ |
 
-### Products
+### Products (Surprise Bags)
 | Method | Endpoint | Deskripsi | Auth |
 |--------|----------|-----------|------|
-| `GET` | `/api/v1/products` | List semua produk (+ search, filter, pagination) | ❌ |
-| `GET` | `/api/v1/products/:id` | Detail produk | ❌ |
-| `POST` | `/api/v1/products` | Buat produk baru | ✅ Merchant |
-| `PUT` | `/api/v1/products/:id` | Update produk | ✅ Merchant |
-| `DELETE` | `/api/v1/products/:id` | Hapus produk | ✅ Merchant |
+| `GET` | `/api/products` | List produk (search, filter, pagination) | ❌ |
+| `GET` | `/api/products/:id` | Detail produk + merchant info | ❌ |
+| `POST` | `/api/products` | Buat produk baru (multipart) | ✅ Merchant |
+| `PATCH` | `/api/products/:id/stock` | Update stok produk | ✅ Merchant |
+| `DELETE` | `/api/products/:id` | Hapus produk | ✅ Merchant |
 
 ### Orders
 | Method | Endpoint | Deskripsi | Auth |
 |--------|----------|-----------|------|
-| `POST` | `/api/v1/orders` | Buat pesanan (reserve) | ✅ Customer |
-| `GET` | `/api/v1/orders` | List pesanan user | ✅ |
-| `GET` | `/api/v1/orders/:id` | Detail pesanan | ✅ |
-| `PUT` | `/api/v1/orders/:id/status` | Update status pesanan | ✅ Merchant |
-| `POST` | `/api/v1/orders/:id/cancel` | Batalkan pesanan | ✅ |
-| `POST` | `/api/v1/orders/verify-pickup` | Verifikasi pickup | ✅ Merchant |
+| `POST` | `/api/orders` | Buat pesanan (bag_id, quantity) | ✅ Customer |
+| `GET` | `/api/orders/my-orders` | List pesanan customer | ✅ Customer |
+| `GET` | `/api/orders/:id` | Detail pesanan | ✅ Customer |
+| `POST` | `/api/orders/:id/redeem` | Verifikasi pickup (pickup_code) | ✅ Merchant |
 
 ### Payments
 | Method | Endpoint | Deskripsi | Auth |
 |--------|----------|-----------|------|
-| `POST` | `/api/v1/payments/create` | Buat transaksi Midtrans | ✅ Customer |
-| `POST` | `/api/v1/payments/callback` | Webhook callback Midtrans | ❌ |
+| `POST` | `/api/payments` | Buat payment (invoice_id, method) | ✅ Customer |
+| `POST` | `/api/payments/callback` | Payment callback webhook | ❌ |
+| `GET` | `/api/payments/:id` | Detail payment | ✅ Customer |
 
 ### Merchant
 | Method | Endpoint | Deskripsi | Auth |
 |--------|----------|-----------|------|
-| `GET` | `/api/v1/merchant/profile` | Get profil merchant | ✅ Merchant |
-| `PUT` | `/api/v1/merchant/profile` | Update profil merchant | ✅ Merchant |
-| `GET` | `/api/v1/merchant/analytics` | Analytics penjualan | ✅ Merchant |
+| `GET` | `/api/merchant/profile` | Get profil merchant | ✅ Merchant |
+| `POST` | `/api/merchant/profile` | Buat profil merchant baru | ✅ Merchant |
 
 ### Admin
 | Method | Endpoint | Deskripsi | Auth |
 |--------|----------|-----------|------|
-| `GET` | `/api/v1/admin/dashboard` | Dashboard stats | ✅ Admin |
-| `GET` | `/api/v1/admin/merchants` | List semua merchant | ✅ Admin |
-| `PUT` | `/api/v1/admin/merchants/:id/verify` | Verifikasi merchant | ✅ Admin |
-| `PUT` | `/api/v1/admin/merchants/:id/status` | Update status merchant | ✅ Admin |
-| `GET` | `/api/v1/admin/complaints` | List keluhan | ✅ Admin |
-| `PUT` | `/api/v1/admin/complaints/:id` | Update keluhan | ✅ Admin |
-| `GET` | `/api/v1/admin/analytics` | Platform analytics | ✅ Admin |
+| `GET` | `/api/admin/dashboard` | Dashboard analytics (users, orders, revenue, CO₂) | ✅ Admin |
+| `GET` | `/api/admin/merchants` | List semua merchant + email | ✅ Admin |
+| `PATCH` | `/api/admin/merchants/:id/verify` | Verifikasi merchant | ✅ Admin |
 
 ### Impact
 | Method | Endpoint | Deskripsi | Auth |
 |--------|----------|-----------|------|
-| `GET` | `/api/v1/impact/me` | Impact user sendiri | ✅ |
-| `GET` | `/api/v1/impact/platform` | Impact keseluruhan platform | ❌ |
+| `GET` | `/api/impact/stats` | Impact stats user (orders, CO₂, money saved) | ✅ Customer |
 
 ---
 
@@ -481,12 +443,11 @@ Gunakan **Quick Login** di halaman login untuk akses cepat:
 | Authentication | JWT Token dengan expiry time |
 | Authorization | RBAC Middleware per endpoint |
 | Password | bcrypt hashing (one-way) |
-| SQL Injection | Sequelize ORM (parameterized queries) |
+| SQL Injection | Parameterized queries (mysql2 placeholders) |
 | XSS | React auto-escaping |
 | HTTP Headers | Helmet.js security headers |
 | CORS | Whitelist origin configuration |
-| Rate Limiting | express-rate-limit |
-| Input Validation | Middleware validation layer |
+| Request Logging | Morgan HTTP logger |
 
 ---
 

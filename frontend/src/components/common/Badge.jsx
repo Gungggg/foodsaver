@@ -1,22 +1,20 @@
-const colorMap = {
-  success: 'bg-green-100 text-green-800',
-  warning: 'bg-yellow-100 text-yellow-800',
-  error: 'bg-red-100 text-red-800',
-  info: 'bg-blue-100 text-blue-800',
-  neutral: 'bg-neutral-100 text-neutral-700',
-  primary: 'bg-primary-50 text-primary',
-  accent: 'bg-accent-50 text-accent-dark',
+const variantStyles = {
+  success: 'bg-secondary-container text-on-secondary-container',
+  error: 'bg-error-container text-on-error-container',
+  warning: 'bg-tertiary-fixed-dim text-on-tertiary-fixed',
+  info: 'bg-surface-container text-on-surface-variant',
+  primary: 'bg-primary-fixed text-on-primary-fixed',
+  default: 'bg-surface-container text-on-surface-variant',
 };
 
-const Badge = ({ children, color = 'neutral', dot = false, className = '' }) => {
+const Badge = ({ children, variant = 'default', className = '' }) => {
   return (
-    <span className={`badge ${colorMap[color] || colorMap.neutral} ${className}`}>
-      {dot && <span className={`status-dot mr-1.5 ${
-        color === 'success' ? 'bg-green-500' :
-        color === 'warning' ? 'bg-yellow-500' :
-        color === 'error' ? 'bg-red-500' :
-        color === 'info' ? 'bg-blue-500' : 'bg-neutral-400'
-      }`} />}
+    <span className={`
+      inline-flex items-center gap-xs px-2 py-1 rounded-full
+      text-label-md font-label-md
+      ${variantStyles[variant] || variantStyles.default}
+      ${className}
+    `}>
       {children}
     </span>
   );

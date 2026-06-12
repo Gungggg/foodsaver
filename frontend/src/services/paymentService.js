@@ -3,25 +3,56 @@ import api from './api';
 const USE_MOCK = true;
 
 const paymentService = {
-  createPayment: async (orderId) => {
+  // POST /api/payments — body: { invoice_id, method }
+  create: async (paymentData) => {
     if (USE_MOCK) {
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise(r => setTimeout(r, 800));
+      const transactionId = 'TRX-' + Date.now();
       return {
-        payment_url: '#',
-        token: 'mock_snap_token_' + Date.now(),
-        order_id: orderId,
+        payment_id: 'pay_' + Date.now(),
+        transaction_id: transactionId,
+        payment_url: 'https://sandbox-payment.com/pay/' + transactionId,
       };
     }
-    const { data } = await api.post('/payments/create', { order_id: orderId });
-    return data;
+
+    // Backend: POST /api/payments → { message, data: { payment_id, transaction_id, payment_url } }
+    const { data } = await api.post('/payments', {
+      invoice_id: paymentData.invoice_id,
+      method: paymentData.method,
+    });
+    return data.data;
   },
 
-  checkStatus: async (orderId) => {
+  // GET /api/payments/:id
+  getById: async (id) => {
+    if (USE_MOCK) {
+      await new Promise(r => setTimeout(r, 300));
+      return {
+        id,
+        status: 'paid',
+        method: 'bank_transfer',
+        amount: 25000,
+        paid_at: new Date().toISOString(),
+      };
+    }
+
+    // Backend: GET /api/payments/:id → { message, data }
+    const { data } = await api.get(`/payments/${id}`);
+    return data.data;
+  },
+
+  // POST /api/payments/callback — body: { transaction_id, status }
+  callback: async (transactionId, status) => {
     if (USE_MOCK) {
       await new Promise(r => setTimeout(r, 500));
-      return { status: 'paid', payment_method: 'gopay' };
+      return { message: 'Payment callback success' };
     }
-    const { data } = await api.get(`/payments/status/${orderId}`);
+
+    // Backend: POST /api/payments/callback → { message }
+    const { data } = await api.post('/payments/callback', {
+      transaction_id: transactionId,
+      status,
+    });
     return data;
   },
 };

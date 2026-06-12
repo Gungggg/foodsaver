@@ -1,76 +1,43 @@
-import { useState, useEffect, createContext, useContext, useCallback } from 'react';
-import { HiCheckCircle, HiExclamationCircle, HiInformationCircle, HiXCircle, HiX } from 'react-icons/hi';
+import { useState, useEffect } from 'react';
 
-const ToastContext = createContext(null);
-
-export const useToast = () => {
-  const context = useContext(ToastContext);
-  if (!context) throw new Error('useToast must be used within ToastProvider');
-  return context;
-};
-
-const icons = {
-  success: HiCheckCircle,
-  error: HiXCircle,
-  warning: HiExclamationCircle,
-  info: HiInformationCircle,
-};
-
-const bgColors = {
-  success: 'bg-green-600',
-  error: 'bg-red-600',
-  warning: 'bg-amber-600',
-  info: 'bg-blue-600',
-};
-
-const Toast = ({ id, type, message, onClose }) => {
-  const Icon = icons[type];
+const Toast = ({ message, type = 'success', onClose, duration = 4000 }) => {
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => onClose(id), 4000);
+    const timer = setTimeout(() => {
+      setVisible(false);
+      setTimeout(onClose, 300);
+    }, duration);
     return () => clearTimeout(timer);
-  }, [id, onClose]);
+  }, [duration, onClose]);
 
-  return (
-    <div className={`toast ${bgColors[type]} mb-3`}>
-      <Icon className="w-5 h-5 flex-shrink-0" />
-      <p className="flex-1 text-sm">{message}</p>
-      <button onClick={() => onClose(id)} className="p-1 hover:bg-white/20 rounded">
-        <HiX className="w-4 h-4" />
-      </button>
-    </div>
-  );
-};
+  const styles = {
+    success: 'bg-secondary-container text-on-secondary-container',
+    error: 'bg-error-container text-on-error-container',
+    warning: 'bg-tertiary-fixed text-on-tertiary-fixed',
+    info: 'bg-surface-container-high text-on-surface',
+  };
 
-export const ToastProvider = ({ children }) => {
-  const [toasts, setToasts] = useState([]);
-
-  const addToast = useCallback((message, type = 'info') => {
-    const id = Date.now() + Math.random();
-    setToasts(prev => [...prev, { id, message, type }]);
-  }, []);
-
-  const removeToast = useCallback((id) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
-
-  const toast = {
-    addToast,
-    success: (msg) => addToast(msg, 'success'),
-    error: (msg) => addToast(msg, 'error'),
-    warning: (msg) => addToast(msg, 'warning'),
-    info: (msg) => addToast(msg, 'info'),
+  const icons = {
+    success: 'check_circle',
+    error: 'error',
+    warning: 'warning',
+    info: 'info',
   };
 
   return (
-    <ToastContext.Provider value={toast}>
-      {children}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col-reverse">
-        {toasts.map(t => (
-          <Toast key={t.id} {...t} onClose={removeToast} />
-        ))}
-      </div>
-    </ToastContext.Provider>
+    <div className={`
+      fixed top-4 right-4 z-[100] flex items-center gap-sm px-md py-sm rounded-xl shadow-card-hover
+      ${styles[type]}
+      transition-all duration-300
+      ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}
+    `}>
+      <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>{icons[type]}</span>
+      <span className="text-body-md font-body-md font-semibold">{message}</span>
+      <button onClick={() => { setVisible(false); setTimeout(onClose, 300); }} className="ml-sm p-1 rounded-full hover:opacity-70 transition-opacity">
+        <span className="material-symbols-outlined text-[18px]">close</span>
+      </button>
+    </div>
   );
 };
 

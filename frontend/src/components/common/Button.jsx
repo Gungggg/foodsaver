@@ -1,55 +1,37 @@
-import { forwardRef } from 'react';
-
 const variants = {
-  primary: 'bg-primary text-white hover:bg-primary-light active:bg-primary-dark focus:ring-primary/50',
-  secondary: 'bg-secondary text-white hover:bg-secondary-light active:bg-secondary-dark focus:ring-secondary/50',
-  accent: 'bg-accent text-white hover:bg-accent-light active:bg-accent-dark focus:ring-accent/50',
-  outline: 'border-2 border-primary text-primary hover:bg-primary hover:text-white focus:ring-primary/50',
-  ghost: 'text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200 focus:ring-neutral-300',
-  danger: 'bg-error text-white hover:bg-red-600 active:bg-red-700 focus:ring-red-400/50',
-  success: 'bg-success text-white hover:bg-green-600 active:bg-green-700 focus:ring-green-400/50',
+  primary: 'bg-primary text-on-primary hover:bg-primary-container shadow-btn',
+  secondary: 'border border-outline-variant text-primary hover:bg-surface-container-low shadow-btn-sm',
+  tonal: 'bg-secondary-container text-on-secondary-container hover:bg-secondary-fixed',
+  text: 'text-primary hover:bg-surface-container-low',
+  danger: 'bg-error text-on-error hover:opacity-90',
+  ghost: 'text-on-surface-variant hover:bg-surface-container-low hover:text-primary',
+  outline: 'border border-outline-variant text-on-surface-variant hover:bg-surface-container-low hover:text-primary',
 };
 
 const sizes = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-5 py-2.5 text-sm',
-  lg: 'px-6 py-3 text-base',
-  xl: 'px-8 py-4 text-lg',
+  sm: 'px-sm py-xs text-label-md font-label-md rounded-lg',
+  md: 'px-md py-sm text-body-md font-body-md rounded-lg',
+  lg: 'px-lg py-sm text-body-lg font-body-lg rounded-lg',
 };
 
-const Button = forwardRef(({
-  children, variant = 'primary', size = 'md', className = '',
-  loading = false, disabled = false, icon: Icon, iconRight,
-  fullWidth = false, ...props
-}, ref) => {
+const Button = ({ children, variant = 'primary', size = 'md', fullWidth, disabled, className = '', icon, ...props }) => {
   return (
     <button
-      ref={ref}
-      disabled={disabled || loading}
+      disabled={disabled}
       className={`
-        inline-flex items-center justify-center gap-2 font-medium rounded-button
-        transition-all duration-200 ease-in-out
-        focus:outline-none focus:ring-2 focus:ring-offset-2
-        disabled:opacity-50 disabled:cursor-not-allowed
-        ${variants[variant]} ${sizes[size]}
+        ${variants[variant] || variants.primary}
+        ${sizes[size] || sizes.md}
         ${fullWidth ? 'w-full' : ''}
+        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+        font-semibold inline-flex items-center justify-center gap-xs transition-all duration-200
         ${className}
       `}
       {...props}
     >
-      {loading ? (
-        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-      ) : Icon ? (
-        <Icon className="w-4 h-4" />
-      ) : null}
+      {icon && <span className="material-symbols-outlined text-[18px]">{icon}</span>}
       {children}
-      {iconRight && !loading && <span className="ml-1">{iconRight}</span>}
     </button>
   );
-});
+};
 
-Button.displayName = 'Button';
 export default Button;

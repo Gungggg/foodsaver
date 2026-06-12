@@ -3,6 +3,16 @@ import { mockUsers } from '../utils/mockData';
 
 const USE_MOCK = true;
 
+// Helper: decode JWT payload (tanpa verifikasi, hanya extract data)
+const decodeJWT = (token) => {
+  try {
+    const payload = token.split('.')[1];
+    return JSON.parse(atob(payload));
+  } catch {
+    return null;
+  }
+};
+
 const authService = {
   login: async (email, password) => {
     if (USE_MOCK) {
@@ -14,8 +24,21 @@ const authService = {
       const token = 'mock_jwt_token_' + user.role + '_' + Date.now();
       return { user, token };
     }
+
+    // Backend: POST /api/auth/login → { message, token }
     const { data } = await api.post('/auth/login', { email, password });
-    return data;
+    const token = data.token;
+
+    // Backend hanya return token, decode JWT untuk dapat user data
+    const decoded = decodeJWT(token);
+    const user = {
+      id: decoded?.id,
+      email: decoded?.email,
+      role: decoded?.role,
+      name: decoded?.email?.split('@')[0] || 'User', // Backend tidak kirim name di JWT
+    };
+
+    return { user, token };
   },
 
   register: async (userData) => {
@@ -25,8 +48,18 @@ const authService = {
       const token = 'mock_jwt_token_customer_' + Date.now();
       return { user, token };
     }
-    const { data } = await api.post('/auth/register', userData);
-    return data;
+
+    // Backend: POST /api/auth/register → { message, data: { user_id } }
+    await api.post('/auth/register', {
+      name: userData.name,
+      email: userData.email,
+      password: userData.password,
+      role: userData.role || 'customer',
+    });
+
+    // Backend tidak return token setelah register, auto-login
+    const loginResult = await authService.login(userData.email, userData.password);
+    return loginResult;
   },
 
   getMe: async () => {
@@ -35,8 +68,16 @@ const authService = {
       if (storedUser) return JSON.parse(storedUser);
       return null;
     }
-    const { data } = await api.get('/auth/me');
-    return data;
+
+    // Backend: GET /api/auth/profile → { message, data: { id, email, role } }
+    const { data } = await api.get('/auth/profile');
+    const userData = data.data;
+    return {
+      id: userData.id,
+      email: userData.email,
+      role: userData.role,
+      name: userData.name || userData.email?.split('@')[0] || 'User',
+    };
   },
 
   updateProfile: async (profileData) => {
@@ -44,8 +85,9 @@ const authService = {
       await new Promise(r => setTimeout(r, 500));
       return { ...mockUsers.customer, ...profileData };
     }
+    // Endpoint belum ada di backend, fallback
     const { data } = await api.put('/auth/profile', profileData);
-    return data;
+    return data.data || data;
   },
 
   changePassword: async (passwords) => {
@@ -53,6 +95,7 @@ const authService = {
       await new Promise(r => setTimeout(r, 500));
       return { message: 'Password updated successfully' };
     }
+    // Endpoint belum ada di backend, fallback
     const { data } = await api.put('/auth/password', passwords);
     return data;
   },

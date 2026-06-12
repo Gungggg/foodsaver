@@ -1,74 +1,97 @@
 import api from './api';
-import { mockOrders, mockMerchantOrders } from '../utils/mockData';
+import { mockOrders } from '../utils/mockData';
 
 const USE_MOCK = true;
 
 const orderService = {
+  // POST /api/orders — body: { bag_id, quantity }
   create: async (orderData) => {
     if (USE_MOCK) {
       await new Promise(r => setTimeout(r, 800));
       return {
-        id: 'ord_new_' + Date.now(),
-        order_number: 'FS-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.floor(Math.random() * 999),
-        ...orderData,
-        status: 'pending',
-        pickup_code: 'FSV-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
-        created_at: new Date().toISOString(),
+        order_id: 'ord_' + Date.now(),
+        invoice_id: 'inv_' + Date.now(),
+        total_amount: orderData.total_amount || 25000,
+        pickup_code: Math.random().toString(36).substring(2, 8).toUpperCase(),
+        qr_code: null,
       };
     }
-    const { data } = await api.post('/orders', orderData);
-    return data;
+
+    // Backend: POST /api/orders → { message, data: { order_id, invoice_id, total_amount, pickup_code, qr_code } }
+    const { data } = await api.post('/orders', {
+      bag_id: orderData.bag_id || orderData.product_id,
+      quantity: orderData.quantity,
+    });
+    return data.data;
   },
 
+  // GET /api/orders/my-orders
   getMyOrders: async () => {
     if (USE_MOCK) {
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, 500));
       return mockOrders;
     }
-    const { data } = await api.get('/orders/my');
-    return data;
+
+    // Backend: GET /api/orders/my-orders → { message, data: [...] }
+    const { data } = await api.get('/orders/my-orders');
+    return data.data;
   },
 
-  getMerchantOrders: async (params = {}) => {
-    if (USE_MOCK) {
-      await new Promise(r => setTimeout(r, 600));
-      let filtered = [...mockMerchantOrders];
-      if (params.status && params.status !== 'all') {
-        filtered = filtered.filter(o => o.status === params.status);
-      }
-      return filtered;
-    }
-    const { data } = await api.get('/merchant/orders', { params });
-    return data;
-  },
-
+  // GET /api/orders/:id
   getById: async (id) => {
     if (USE_MOCK) {
-      await new Promise(r => setTimeout(r, 400));
-      return mockOrders.find(o => o.id === id) || mockOrders[0];
+      await new Promise(r => setTimeout(r, 300));
+      const order = mockOrders.find(o => o.id === id);
+      if (!order) throw new Error('Order not found');
+      return order;
     }
+
+    // Backend: GET /api/orders/:id → { message, data }
     const { data } = await api.get(`/orders/${id}`);
-    return data;
+    return data.data;
+  },
+
+  // POST /api/orders/:id/redeem — body: { pickup_code }
+  redeemOrder: async (orderId, pickupCode) => {
+    if (USE_MOCK) {
+      await new Promise(r => setTimeout(r, 500));
+      return {
+        message: 'Order redeemed successfully',
+        impact_log_id: 'imp_' + Date.now(),
+        co2_saved: 2.5,
+        money_saved: 25000,
+      };
+    }
+
+    // Backend: POST /api/orders/:id/redeem → { message, data: { impact_log_id, co2_saved, money_saved } }
+    const { data } = await api.post(`/orders/${orderId}/redeem`, {
+      pickup_code: pickupCode,
+    });
+    return data.data || data;
+  },
+
+  // Alias for backward compatibility with frontend pages
+  verifyPickup: async (pickupCode) => {
+    if (USE_MOCK) {
+      await new Promise(r => setTimeout(r, 500));
+      return { message: 'Pickup verified', orderId: 'ord_001' };
+    }
+    // Frontend perlu tahu order_id dulu sebelum redeem
+    return { message: 'Use redeemOrder with orderId instead' };
+  },
+
+  // Alias for frontend compatibility
+  getAll: async () => {
+    return orderService.getMyOrders();
   },
 
   updateStatus: async (id, status) => {
     if (USE_MOCK) {
       await new Promise(r => setTimeout(r, 500));
-      return { id, status };
+      return { message: 'Status updated' };
     }
-    const { data } = await api.patch(`/orders/${id}/status`, { status });
-    return data;
-  },
-
-  verifyPickup: async (pickupCode) => {
-    if (USE_MOCK) {
-      await new Promise(r => setTimeout(r, 800));
-      const order = [...mockMerchantOrders, ...mockOrders].find(o => o.pickup_code === pickupCode);
-      if (order) return { success: true, order };
-      return { success: false, message: 'Invalid pickup code' };
-    }
-    const { data } = await api.post('/orders/verify-pickup', { pickup_code: pickupCode });
-    return data;
+    // Endpoint tidak tersedia di backend existing
+    return { message: 'Not implemented' };
   },
 };
 

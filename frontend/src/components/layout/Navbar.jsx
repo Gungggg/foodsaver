@@ -1,8 +1,6 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { HiMenu, HiX, HiShoppingBag, HiUser, HiLogout, HiChevronDown } from 'react-icons/hi';
-import Button from '../common/Button';
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -13,6 +11,7 @@ const Navbar = () => {
   const handleLogout = () => {
     logout();
     navigate('/');
+    setProfileOpen(false);
   };
 
   const getDashboardPath = () => {
@@ -21,114 +20,119 @@ const Navbar = () => {
     return paths[user.role] || '/';
   };
 
-  return (
-    <nav className="bg-white/80 backdrop-blur-lg border-b border-neutral-200 sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white text-lg">🌿</span>
-            </div>
-            <span className="font-heading font-bold text-xl text-primary group-hover:text-primary-light transition-colors">
-              FoodSaver
-            </span>
-          </Link>
+  const navLinkClass = ({ isActive }) =>
+    isActive
+      ? 'text-secondary font-bold border-b-2 border-secondary pb-1 text-body-md font-body-md transition-colors'
+      : 'text-on-surface-variant hover:text-primary text-body-md font-body-md hover:bg-surface-container-low transition-colors px-sm py-xs rounded';
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-6">
-            <Link to="/marketplace" className="text-neutral-600 hover:text-primary font-medium transition-colors text-sm">
-              Marketplace
-            </Link>
-            {!isAuthenticated ? (
-              <div className="flex items-center gap-3">
-                <Link to="/login">
-                  <Button variant="ghost" size="sm">Log In</Button>
-                </Link>
-                <Link to="/register">
-                  <Button variant="primary" size="sm">Sign Up</Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="flex items-center gap-4">
-                <Link to={getDashboardPath()} className="text-neutral-600 hover:text-primary font-medium transition-colors text-sm">
-                  Dashboard
-                </Link>
-                <div className="relative">
-                  <button
-                    onClick={() => setProfileOpen(!profileOpen)}
-                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-neutral-100 transition-colors"
-                  >
-                    <div className="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center font-semibold text-sm">
-                      {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                    </div>
-                    <span className="text-sm font-medium text-neutral-700 hidden lg:block">{user?.name}</span>
-                    <HiChevronDown className="w-4 h-4 text-neutral-400" />
-                  </button>
-                  {profileOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-card shadow-card-lg border border-neutral-200 py-2 animate-slide-down">
-                      <div className="px-4 py-2 border-b border-neutral-100">
-                        <p className="text-sm font-medium text-neutral-900">{user?.name}</p>
-                        <p className="text-xs text-neutral-500">{user?.email}</p>
-                        <span className="inline-block mt-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full capitalize">{user?.role}</span>
-                      </div>
-                      <Link
-                        to={getDashboardPath()}
-                        onClick={() => setProfileOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-50 hover:text-primary"
-                      >
-                        <HiShoppingBag className="w-4 h-4" /> Dashboard
-                      </Link>
-                      <Link
-                        to={`/${user?.role}/profile`}
-                        onClick={() => setProfileOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-50 hover:text-primary"
-                      >
-                        <HiUser className="w-4 h-4" /> Profile
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
-                      >
-                        <HiLogout className="w-4 h-4" /> Sign Out
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
+  return (
+    <nav className="bg-surface/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+      <div className="flex justify-between items-center px-gutter py-base max-w-container-max mx-auto w-full">
+        {/* Left: Logo + Nav */}
+        <div className="flex items-center gap-md">
+          <Link to="/" className="text-headline-sm font-headline-sm font-bold text-primary">
+            FoodSaver
+          </Link>
+          <div className="hidden md:flex gap-sm ml-lg">
+            <NavLink to="/marketplace" className={navLinkClass}>Marketplace</NavLink>
+            {isAuthenticated && (
+              <>
+                <NavLink to={getDashboardPath()} className={navLinkClass}>Dashboard</NavLink>
+              </>
             )}
           </div>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-sm">
+          {!isAuthenticated ? (
+            <div className="hidden md:flex items-center gap-sm">
+              <Link to="/login" className="text-on-surface-variant hover:text-primary text-body-md font-body-md px-sm py-xs rounded transition-colors">
+                Log In
+              </Link>
+              <Link to="/register" className="bg-primary text-on-primary px-md py-sm rounded-lg text-body-md font-body-md font-semibold hover:opacity-90 transition-opacity">
+                Sign Up
+              </Link>
+            </div>
+          ) : (
+            <>
+              <button className="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors">
+                <span className="material-symbols-outlined">notifications</span>
+              </button>
+              <button className="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors">
+                <span className="material-symbols-outlined">shopping_bag</span>
+              </button>
+              {/* Profile dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-headline-sm font-semibold text-sm ml-2 border border-outline-variant/30 hover:opacity-90 transition-opacity"
+                >
+                  {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                </button>
+                {profileOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-surface-container-lowest rounded-xl shadow-card-hover border border-outline-variant/20 py-2 animate-fade-in z-50">
+                    <div className="px-md py-sm border-b border-outline-variant/20">
+                      <p className="text-body-md font-body-md font-semibold text-on-background">{user?.name}</p>
+                      <p className="text-label-md font-label-md text-outline">{user?.email}</p>
+                      <span className="inline-block mt-1 text-label-md bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full capitalize">{user?.role}</span>
+                    </div>
+                    <Link
+                      to={getDashboardPath()}
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center gap-sm px-md py-sm text-body-md text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">dashboard</span> Dashboard
+                    </Link>
+                    <Link
+                      to={`/${user?.role}/profile`}
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center gap-sm px-md py-sm text-body-md text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">person</span> Profile
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-sm px-md py-sm text-body-md text-error hover:bg-error-container/30 w-full text-left transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">logout</span> Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           {/* Mobile menu button */}
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 rounded-lg hover:bg-neutral-100">
-            {mobileOpen ? <HiX className="w-6 h-6" /> : <HiMenu className="w-6 h-6" />}
+          <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors">
+            <span className="material-symbols-outlined">{mobileOpen ? 'close' : 'menu'}</span>
           </button>
         </div>
       </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-neutral-200 animate-slide-down">
-          <div className="px-4 py-4 space-y-3">
-            <Link to="/marketplace" onClick={() => setMobileOpen(false)} className="block py-2 text-neutral-700 hover:text-primary font-medium">
-              Marketplace
+        <div className="md:hidden bg-surface border-t border-outline-variant/20 animate-slide-up">
+          <div className="px-gutter py-md space-y-sm">
+            <Link to="/marketplace" onClick={() => setMobileOpen(false)} className="flex items-center gap-sm py-sm text-on-surface-variant hover:text-primary text-body-md font-body-md transition-colors">
+              <span className="material-symbols-outlined text-[20px]">storefront</span> Marketplace
             </Link>
             {isAuthenticated ? (
               <>
-                <Link to={getDashboardPath()} onClick={() => setMobileOpen(false)} className="block py-2 text-neutral-700 hover:text-primary font-medium">
-                  Dashboard
+                <Link to={getDashboardPath()} onClick={() => setMobileOpen(false)} className="flex items-center gap-sm py-sm text-on-surface-variant hover:text-primary text-body-md font-body-md transition-colors">
+                  <span className="material-symbols-outlined text-[20px]">dashboard</span> Dashboard
                 </Link>
-                <button onClick={handleLogout} className="block py-2 text-red-600 font-medium w-full text-left">
-                  Sign Out
+                <button onClick={handleLogout} className="flex items-center gap-sm py-sm text-error text-body-md font-body-md w-full text-left">
+                  <span className="material-symbols-outlined text-[20px]">logout</span> Sign Out
                 </button>
               </>
             ) : (
-              <div className="flex gap-3 pt-2">
-                <Link to="/login" onClick={() => setMobileOpen(false)} className="flex-1">
-                  <Button variant="outline" fullWidth size="sm">Log In</Button>
+              <div className="flex gap-sm pt-sm">
+                <Link to="/login" onClick={() => setMobileOpen(false)} className="flex-1 text-center border border-outline-variant text-primary py-sm rounded-lg text-body-md font-semibold hover:bg-surface-container-low transition-colors">
+                  Log In
                 </Link>
-                <Link to="/register" onClick={() => setMobileOpen(false)} className="flex-1">
-                  <Button variant="primary" fullWidth size="sm">Sign Up</Button>
+                <Link to="/register" onClick={() => setMobileOpen(false)} className="flex-1 text-center bg-primary text-on-primary py-sm rounded-lg text-body-md font-semibold hover:opacity-90 transition-opacity">
+                  Sign Up
                 </Link>
               </div>
             )}
